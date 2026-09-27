@@ -8,16 +8,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
   <header class="topbar">
     <a class="wordmark" href="index.html">splitpot</a>
-    <a class="balance" id="balanceLink" href="login.html">
-      <span id="balanceLabel">Account</span>
-      <strong id="balanceAmount">Sign in</strong>
-    </a>
+    <div class="topbar-right">
+      <a class="balance" id="balanceLink" href="login.html">
+        <span id="balanceLabel">Account</span>
+        <strong id="balanceAmount">Sign in</strong>
+      </a>
+      <a class="add-pill" id="addPill" href="wallet.html" aria-label="Add money" hidden>+ Add</a>
+    </div>
   </header>
 
   <main>
@@ -53,6 +56,11 @@
 
       <p class="breakdown" id="breakdown" aria-live="polite"></p>
     </section>
+
+    <div class="empty-wallet" id="emptyWallet" hidden>
+      <p><strong>Your wallet is empty.</strong> You need money in your wallet to create or join a room.</p>
+      <a class="btn btn-primary" href="wallet.html">Add money</a>
+    </div>
 
     <section class="actions">
       <a class="btn btn-primary" href="create.html" data-requires-login>Create a room</a>
@@ -172,6 +180,9 @@
           maximumFractionDigits: 2
         });
         link.href = "wallet.html";
+
+        document.getElementById("addPill").hidden = false;
+        document.getElementById("emptyWallet").hidden = kobo > 0;
       } catch (err) {
         console.error("Could not load account:", err);
       } finally {
