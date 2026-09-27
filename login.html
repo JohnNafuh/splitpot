@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0E3A2C">
+  <title>Sign in · splitpot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .auth {
+      padding-top: 24px;
+      padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .auth h1 {
+      font-size: clamp(1.9rem, 8vw, 2.3rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+      text-wrap: balance;
+    }
+
+    .auth .hint {
+      margin-top: 10px;
+      color: var(--moss);
+      line-height: 1.45;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      margin-top: 28px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(8, 36, 25, 0.45);
+    }
+
+    .segmented button {
+      min-height: 44px;
+      border: 0;
+      border-radius: 12px;
+      background: transparent;
+      color: var(--moss);
+      font-weight: 600;
+    }
+
+    .segmented button[aria-pressed="true"] {
+      background: var(--felt-raised);
+      color: var(--chalk);
+    }
+
+    .form {
+      display: grid;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .input-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .input-group label {
+      font-size: 0.9rem;
+      color: var(--moss);
+    }
+
+    .input-group input {
+      width: 100%;
+      min-height: 52px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(8, 36, 25, 0.45);
+      color: var(--chalk);
+      font: inherit;
+      font-size: 1.05rem;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: var(--brass);
+    }
+
+    .form .btn {
+      width: 100%;
+      margin-top: 8px;
+      border: 0;
+    }
+
+    .form .btn:disabled {
+      opacity: 0.6;
+    }
+
+    .error {
+      min-height: 1.4em;
+      color: #F2A39A;
+      line-height: 1.4;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="wordmark" href="index.html">splitpot</a>
+  </header>
+
+  <main class="auth">
+
+    <!-- Step 1: sign in or create account -->
+    <section id="authStep">
+      <h1 id="authTitle">Sign in to splitpot</h1>
+
+      <div class="segmented" role="group" aria-label="Choose sign in or create account">
+        <button type="button" id="modeSignIn" aria-pressed="true">Sign in</button>
+        <button type="button" id="modeSignUp" aria-pressed="false">Create account</button>
+      </div>
+
+      <form class="form" id="authForm" novalidate>
+        <div class="input-group">
+          <label for="email">Email</label>
+          <input id="email" type="email" autocomplete="email" inputmode="email" required>
+        </div>
+
+        <div class="input-group">
+          <label for="password">Password</label>
+          <input id="password" type="password" autocomplete="current-password" minlength="6" required>
+        </div>
+
+        <p class="error" id="authError" role="alert"></p>
+
+        <button class="btn btn-primary" type="submit" id="authButton">Sign in</button>
+      </form>
+    </section>
+
+    <!-- Step 2: pick a username (new players only) -->
+    <section id="usernameStep" hidden>
+      <h1>Pick a username</h1>
+      <p class="hint">This is how your friends see you in a room. Use 3 to 20 letters, numbers or underscores.</p>
+
+      <form class="form" id="usernameForm" novalidate>
+        <div class="input-group">
+          <label for="username">Username</label>
+          <input id="username" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="20" required>
+        </div>
+
+        <p class="error" id="usernameError" role="alert"></p>
+
+        <button class="btn btn-primary" type="submit" id="usernameButton">Save username</button>
+      </form>
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+
+  <script>
+    let mode = "signin";
+
+    const authStep = document.getElementById("authStep");
+    const usernameStep = document.getElementById("usernameStep");
+    const authTitle = document.getElementById("authTitle");
+    const modeSignIn = document.getElementById("modeSignIn");
+    const modeSignUp = document.getElementById("modeSignUp");
+    const authForm = document.getElementById("authForm");
+    const emailEl = document.getElementById("email");
+    const passwordEl = document.getElementById("password");
+    const authError = document.getElementById("authError");
+    const authButton = document.getElementById("authButton");
+    const usernameForm = document.getElementById("usernameForm");
+    const usernameEl = document.getElementById("username");
+    const usernameError = document.getElementById("usernameError");
+    const usernameButton = document.getElementById("usernameButton");
+
+    function setMode(next) {
+      mode = next;
+      const signingUp = mode === "signup";
+      modeSignIn.setAttribute("aria-pressed", String(!signingUp));
+      modeSignUp.setAttribute("aria-pressed", String(signingUp));
+      authTitle.textContent = signingUp ? "Create your splitpot account" : "Sign in to splitpot";
+      authButton.textContent = signingUp ? "Create account" : "Sign in";
+      passwordEl.autocomplete = signingUp ? "new-password" : "current-password";
+      authError.textContent = "";
+    }
+
+    function showUsernameStep() {
+      authStep.hidden = true;
+      usernameStep.hidden = false;
+      usernameEl.focus();
+    }
+
+    async function hasProfile(userId) {
+      const { data, error } = await sb
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      return Boolean(data);
+    }
+
+    async function routeSignedInUser(user) {
+      if (await hasProfile(user.id)) {
+        window.location.href = "index.html";
+      } else {
+        showUsernameStep();
+      }
+    }
+
+    modeSignIn.addEventListener("click", () => setMode("signin"));
+    modeSignUp.addEventListener("click", () => setMode("signup"));
+
+    authForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      authError.textContent = "";
+
+      const email = emailEl.value.trim();
+      const password = passwordEl.value;
+
+      if (!email || !email.includes("@")) {
+        authError.textContent = "Enter a valid email address.";
+        return;
+      }
+      if (password.length < 6) {
+        authError.textContent = "Password must be at least 6 characters.";
+        return;
+      }
+
+      authButton.disabled = true;
+      authButton.textContent = mode === "signup" ? "Creating account…" : "Signing in…";
+
+      try {
+        const result = mode === "signup"
+          ? await sb.auth.signUp({ email, password })
+          : await sb.auth.signInWithPassword({ email, password });
+
+        if (result.error) throw result.error;
+
+        const user = result.data.user;
+        if (!result.data.session) {
+          authError.textContent = "Check your email to confirm your account, then sign in.";
+          return;
+        }
+
+        await routeSignedInUser(user);
+      } catch (err) {
+        authError.textContent = err.message || "Something went wrong. Try again.";
+      } finally {
+        authButton.disabled = false;
+        authButton.textContent = mode === "signup" ? "Create account" : "Sign in";
+      }
+    });
+
+    usernameForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      usernameError.textContent = "";
+
+      const username = usernameEl.value.trim();
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
+        usernameError.textContent = "Use 3 to 20 letters, numbers or underscores.";
+        return;
+      }
+
+      usernameButton.disabled = true;
+      usernameButton.textContent = "Saving…";
+
+      try {
+        const { data: { user } } = await sb.auth.getUser();
+        if (!user) {
+          window.location.reload();
+          return;
+        }
+
+        const { error } = await sb.from("profiles").insert({ id: user.id, username });
+        if (error) {
+          if (error.code === "23505") {
+            usernameError.textContent = "That username is taken. Try another.";
+            return;
+          }
+          throw error;
+        }
+
+        window.location.href = "index.html";
+      } catch (err) {
+        usernameError.textContent = err.message || "Could not save username. Try again.";
+      } finally {
+        usernameButton.disabled = false;
+        usernameButton.textContent = "Save username";
+      }
+    });
+
+    // If already signed in, skip the form
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        try {
+          await routeSignedInUser(session.user);
+        } catch (err) {
+          authError.textContent = err.message;
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
