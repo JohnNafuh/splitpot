@@ -56,9 +56,11 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 480px;
-  margin: 0 auto;
-  padding: calc(14px + env(safe-area-inset-top, 0px)) 20px 14px;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) max(20px, calc(50% - 220px)) 14px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(8, 36, 25, 0.92);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 .wordmark {
