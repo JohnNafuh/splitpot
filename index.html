@@ -63,7 +63,7 @@
     </div>
 
     <section class="actions">
-      <a class="btn btn-primary" href="create.html" data-requires-login>Create a room</a>
+      <a class="btn btn-primary" href="create.html" id="createLink" data-requires-login>Create a room</a>
       <a class="btn btn-secondary" href="join.html" data-requires-login>Join with a code</a>
     </section>
   </main>
@@ -149,6 +149,15 @@
 
     render();
 
+    // Carry the calculator values into the create room page
+    let signedIn = false;
+    document.getElementById("createLink").addEventListener("click", (event) => {
+      if (!signedIn) return;
+      event.preventDefault();
+      const stake = Math.floor(Math.max(0, Number(stakeEl.value) || 0));
+      window.location.href = "create.html?players=" + players + "&stake=" + stake;
+    });
+
     // Account: show real balance when logged in, send to login when not
     async function loadAccount() {
       const link = document.getElementById("balanceLink");
@@ -180,6 +189,7 @@
           maximumFractionDigits: 2
         });
         link.href = "wallet.html";
+        signedIn = true;
 
         document.getElementById("addPill").hidden = false;
         document.getElementById("emptyWallet").hidden = kobo > 0;
