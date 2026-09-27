@@ -72,6 +72,11 @@ button {
   flex-direction: column;
   align-items: flex-end;
   line-height: 1.15;
+  visibility: hidden;
+}
+
+.balance.ready {
+  visibility: visible;
 }
 
 .balance span {
@@ -320,4 +325,3 @@ main {
   .slice { animation: none; }
   .btn { transition: none; }
 }
-
