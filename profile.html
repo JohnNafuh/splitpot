@@ -77,17 +77,45 @@
       color: var(--brass);
     }
 
-    .profile h2 {
-      margin-top: 32px;
-      font-size: 1.15rem;
-      font-weight: 800;
-      letter-spacing: -0.01em;
+    .name-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .edit-btn {
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: transparent;
+      color: var(--moss);
+    }
+
+    .edit-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .username-form {
       display: grid;
       gap: 10px;
-      margin-top: 12px;
+      margin-top: 20px;
+    }
+
+    .form-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
 
     .username-form input {
@@ -123,6 +151,7 @@
 
     .status {
       min-height: 1.4em;
+      margin-top: 12px;
       line-height: 1.4;
     }
 
@@ -144,7 +173,12 @@
     <div class="who">
       <span class="avatar-lg" id="avatar">?</span>
       <div>
-        <h1 id="username">Loading…</h1>
+        <div class="name-row">
+          <h1 id="username">Loading…</h1>
+          <button class="edit-btn" type="button" id="editBtn" aria-label="Change username" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>
+          </button>
+        </div>
         <p class="email" id="email"></p>
       </div>
     </div>
@@ -155,12 +189,14 @@
       <div class="gold"><dt>Winnings</dt><dd id="winnings">₦0</dd></div>
     </dl>
 
-    <h2>Change username</h2>
-    <form class="username-form" id="usernameForm" novalidate>
+    <form class="username-form" id="usernameForm" novalidate hidden>
       <input id="newUsername" type="text" maxlength="20" autocomplete="username" autocapitalize="off" spellcheck="false" aria-label="New username">
-      <button class="btn btn-secondary" type="submit" id="saveBtn">Save username</button>
-      <p class="status" id="status" role="status"></p>
+      <div class="form-buttons">
+        <button class="btn btn-secondary" type="button" id="cancelBtn">Cancel</button>
+        <button class="btn btn-primary" type="submit" id="saveBtn">Save</button>
+      </div>
     </form>
+    <p class="status" id="status" role="status"></p>
 
     <div class="signout">
       <button class="btn btn-secondary" type="button" id="signOutBtn">Sign out</button>
@@ -206,7 +242,25 @@
       $("username").textContent = name;
       $("avatar").textContent = name.charAt(0);
       $("newUsername").value = name;
+      $("editBtn").hidden = false;
     }
+
+    function closeEditor() {
+      $("usernameForm").hidden = true;
+      $("newUsername").value = currentName;
+      $("newUsername").blur();
+    }
+
+    $("editBtn").addEventListener("click", () => {
+      setStatus("");
+      $("usernameForm").hidden = false;
+      $("newUsername").focus();
+    });
+
+    $("cancelBtn").addEventListener("click", () => {
+      setStatus("");
+      closeEditor();
+    });
 
     async function loadProfile() {
       const { data, error } = await sb.from("profiles").select("username").eq("id", me).maybeSingle();
@@ -240,7 +294,7 @@
       const name = $("newUsername").value.trim();
 
       if (name === currentName) {
-        setStatus("That's already your username.");
+        closeEditor();
         return;
       }
       if (!/^[A-Za-z0-9_]{3,20}$/.test(name)) {
@@ -261,6 +315,7 @@
           throw error;
         }
         showName(name);
+        closeEditor();
         setStatus("Username updated.", "ok");
       } catch (err) {
         setStatus(err.message || "Could not update your username.", "bad");
