@@ -167,6 +167,10 @@
   <script>
     let mode = "signin";
 
+    // Where to go after login (only pages on this site)
+    const nextParam = new URLSearchParams(window.location.search).get("next") || "";
+    const nextPage = /^[a-z]+\.html(\?[A-Za-z0-9=&%_-]*)?$/.test(nextParam) ? nextParam : "index.html";
+
     const authStep = document.getElementById("authStep");
     const usernameStep = document.getElementById("usernameStep");
     const authTitle = document.getElementById("authTitle");
@@ -211,7 +215,7 @@
 
     async function routeSignedInUser(user) {
       if (await hasProfile(user.id)) {
-        window.location.href = "index.html";
+        window.location.href = nextPage;
       } else {
         showUsernameStep();
       }
@@ -290,7 +294,7 @@
           throw error;
         }
 
-        window.location.href = "index.html";
+        window.location.href = nextPage;
       } catch (err) {
         usernameError.textContent = err.message || "Could not save username. Try again.";
       } finally {

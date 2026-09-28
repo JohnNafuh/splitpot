@@ -1,1 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0E3A2C">
+  <title>Room · splitpot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=3">
+  <style>
+    .room {
+      padding-top: 24px;
+    }
 
+    .room-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .room-head h1 {
+      font-size: clamp(1.9rem, 8vw, 2.3rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+    }
+
+    .status-pill {
+      flex-shrink: 0;
+      padding: 6px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 0.85rem;
+      color: var(--moss);
+      white-space: nowrap;
+    }
+
+    .status-pill[data-status="playing"],
+    .status-pill[data-status="voting"] {
+      border-color: var(--brass);
+      color: var(--brass);
+    }
+
+    .code-box {
+      margin-top: 24px;
+      padding: 18px 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(8, 36, 25, 0.45);
+      text-align: center;
+    }
+
+    .code-box .label {
+      font-size: 0.9rem;
+      color: var(--moss);
+    }
+
+    .code {
+      margin-top: 6px;
+      font-size: clamp(2.2rem, 11vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      color: var(--brass);
+    }
+
+    .code-box .btn {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 14px;
+      font-size: 1rem;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .stats div {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    .stats dt {
+      font-size: 0.8rem;
+      color: var(--moss);
+    }
+
+    .stats dd {
+      margin: 4px 0 0;
+      font-weight: 800;
+    }
+
+    .stats .win dd {
+      color: var(--brass);
+    }
+
+    .room h2 {
+      margin-top: 28px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .players {
+      margin-top: 12px;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .players li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 56px;
+      padding: 8px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    .players li.empty {
+      border-style: dashed;
+      color: var(--moss);
+    }
+
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--felt-raised);
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .players .name {
+      flex: 1;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tag {
+      font-size: 0.8rem;
+      color: var(--moss);
+    }
+
+    .tag.voted {
+      color: #8FD6A8;
+    }
+
+    .panel {
+      margin-top: 28px;
+    }
+
+    .panel .hint {
+      margin-top: 6px;
+      color: var(--moss);
+      line-height: 1.45;
+    }
+
+    .panel .btn {
+      width: 100%;
+      margin-top: 14px;
+      border: 0;
+    }
+
+    .panel .btn-secondary {
+      border: 1.5px solid var(--line);
+      background: transparent;
+    }
+
+    .panel .btn:disabled {
+      opacity: 0.5;
+    }
+
+    .vote-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .vote-list button {
+      min-height: 52px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(8, 36, 25, 0.45);
+      font-weight: 600;
+      text-align: left;
+    }
+
+    .vote-list button[aria-pressed="true"] {
+      border-color: var(--brass);
+      background: var(--felt-raised);
+      color: var(--brass);
+    }
+
+    .result {
+      padding: 20px 16px;
+      border: 1px solid rgba(227, 179, 65, 0.4);
+      border-radius: 18px;
+      background: rgba(227, 179, 65, 0.08);
+      text-align: center;
+    }
+
+    .result .big {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--brass);
+    }
+
+    .result p + p {
+      margin-top: 6px;
+      color: var(--moss);
+      line-height: 1.45;
+    }
+
+    .error {
+      min-height: 1.4em;
+      margin-top: 12px;
+      color: #F2A39A;
+      line-height: 1.4;
+    }
+
+    .error a {
+      color: var(--brass);
+      text-decoration: underline;
+    }
+
+    .message {
+      margin-top: 40px;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .message a {
+      color: var(--brass);
+      font-weight: 600;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="wordmark" href="index.html">splitpot</a>
+  </header>
+
+  <main class="room">
+    <p class="message" id="message">Loading room…</p>
+
+    <div id="roomView" hidden>
+      <div class="room-head">
+        <h1 id="gameName"></h1>
+        <span class="status-pill" id="statusPill"></span>
+      </div>
+
+      <div class="code-box" id="codeBox">
+        <p class="label">Join code</p>
+        <p class="code" id="roomCode"></p>
+        <button class="btn btn-secondary" type="button" id="shareBtn">Share invite</button>
+      </div>
+
+      <dl class="stats">
+        <div><dt>Stake each</dt><dd id="statStake"></dd></div>
+        <div><dt>Pot</dt><dd id="statPot"></dd></div>
+        <div class="win"><dt>Winner gets</dt><dd id="statWin"></dd></div>
+      </dl>
+
+      <h2 id="playersHeading">Players</h2>
+      <ul class="players" id="players"></ul>
+
+      <section class="panel" id="panel"></section>
+      <p class="error" id="error" role="alert"></p>
+    </div>
+  </main>
+
+  <nav class="tabbar" aria-label="Main">
+    <a href="index.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+      <span>Home</span>
+    </a>
+    <a href="rooms.html" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.6c2.6.1 4.6 1.9 5.3 5.1"/></svg>
+      <span>Rooms</span>
+    </a>
+    <a href="wallet.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="15" r="1.2"/></svg>
+      <span>Wallet</span>
+    </a>
+    <a href="profile.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4 4.3-6 8-6s6.8 2 8 6"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+
+  <script>
+    const STATUS = {
+      waiting: "Waiting for players",
+      playing: "Game on",
+      voting: "Voting",
+      disputed: "Under review",
+      settled: "Finished",
+      cancelled: "Cancelled"
+    };
+
+    const code = (new URLSearchParams(window.location.search).get("code") || "").trim().toUpperCase();
+
+    let me = null;
+    let room = null;
+    let players = [];
+    let names = {};
+    let selectedVote = null;
+    let busy = false;
+    let channel = null;
+
+    const $ = (id) => document.getElementById(id);
+    const naira = (kobo) => "₦" + Math.round(kobo / 100).toLocaleString("en-NG");
+    const nameOf = (id) => (id === me ? "You" : names[id] || "Player");
+
+    function showMessage(text, linkText, href) {
+      $("roomView").hidden = true;
+      const msg = $("message");
+      msg.hidden = false;
+      msg.textContent = text + " ";
+      if (linkText) {
+        const a = document.createElement("a");
+        a.href = href;
+        a.textContent = linkText;
+        msg.append(a);
+      }
+    }
+
+    function setError(text, withWalletLink) {
+      const el = $("error");
+      el.textContent = text;
+      if (withWalletLink) {
+        const a = document.createElement("a");
+        a.href = "wallet.html";
+        a.textContent = "Add money";
+        el.append(" ", a);
+      }
+    }
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function button(text, kind, onClick) {
+      const b = el("button", "btn " + kind, text);
+      b.type = "button";
+      b.disabled = busy;
+      b.addEventListener("click", onClick);
+      return b;
+    }
+
+    async function load() {
+      const { data: r, error } = await sb.from("rooms").select("*").eq("code", code).maybeSingle();
+      if (error) throw error;
+      if (!r) {
+        showMessage("No room found with code " + code + ".", "Try another code", "join.html");
+        return false;
+      }
+      room = r;
+
+      const { data: ps, error: pError } = await sb
+        .from("room_players")
+        .select("user_id, vote_for, joined_at")
+        .eq("room_id", room.id)
+        .order("joined_at");
+      if (pError) throw pError;
+      players = ps;
+
+      const ids = players.map((p) => p.user_id);
+      if (room.winner_id) ids.push(room.winner_id);
+      const missing = [...new Set(ids)].filter((id) => !names[id]);
+      if (missing.length) {
+        const { data: profs, error: nError } = await sb.from("profiles").select("id, username").in("id", missing);
+        if (nError) throw nError;
+        profs.forEach((p) => { names[p.id] = p.username; });
+      }
+
+      render();
+      return true;
+    }
+
+    function render() {
+      $("message").hidden = true;
+      $("roomView").hidden = false;
+      document.title = room.game + " · splitpot";
+
+      const fullPot = room.stake * room.max_players;
+      const winnings = room.status === "settled" ? room.pot - room.fee : fullPot * 0.8;
+
+      $("gameName").textContent = room.game;
+      $("statusPill").textContent = STATUS[room.status] || room.status;
+      $("statusPill").dataset.status = room.status;
+      $("roomCode").textContent = room.code;
+      $("codeBox").hidden = room.status !== "waiting";
+      $("statStake").textContent = naira(room.stake);
+      $("statPot").textContent = naira(room.pot);
+      $("statWin").textContent = naira(winnings);
+      $("playersHeading").textContent = "Players " + players.length + " of " + room.max_players;
+
+      renderPlayers();
+      renderPanel();
+    }
+
+    function renderPlayers() {
+      const list = $("players");
+      list.innerHTML = "";
+      const showVotes = room.status === "voting";
+
+      players.forEach((p) => {
+        const li = el("li");
+        const displayName = names[p.user_id] || "Player";
+        li.append(el("span", "avatar", displayName.charAt(0)));
+        li.append(el("span", "name", p.user_id === me ? displayName + " (you)" : displayName));
+        if (p.user_id === room.host_id) li.append(el("span", "tag", "Host"));
+        if (showVotes && p.vote_for) li.append(el("span", "tag voted", "Voted"));
+        list.append(li);
+      });
+
+      if (room.status === "waiting") {
+        for (let i = players.length; i < room.max_players; i++) {
+          const li = el("li", "empty");
+          li.append(el("span", "avatar", "?"));
+          li.append(el("span", "name", "Waiting for a player…"));
+          list.append(li);
+        }
+      }
+    }
+
+    function renderPanel() {
+      const panel = $("panel");
+      panel.innerHTML = "";
+      const mine = players.find((p) => p.user_id === me);
+
+      if (room.status === "waiting") {
+        if (!mine) {
+          panel.append(el("p", "hint", "Your stake of " + naira(room.stake) + " is locked when you join. You get it back if you leave before the room fills."));
+          panel.append(button("Join for " + naira(room.stake), "btn-primary", joinRoom));
+        } else if (room.host_id === me) {
+          panel.append(el("p", "hint", "Share the code with your friends. The game starts when every seat is filled."));
+          panel.append(button("Cancel room", "btn-secondary", leaveRoom));
+        } else {
+          panel.append(el("p", "hint", "The game starts when every seat is filled."));
+          panel.append(button("Leave room", "btn-secondary", leaveRoom));
+        }
+        return;
+      }
+
+      if (room.status === "playing" || room.status === "voting") {
+        if (!mine) {
+          panel.append(el("p", "hint", "This game is in progress."));
+          return;
+        }
+
+        const votedCount = players.filter((p) => p.vote_for).length;
+
+        if (!mine.vote_for) {
+          panel.append(el("h2", "", "Who won?"));
+          panel.append(el("p", "hint", "Your vote is final. If everyone agrees, the winner is paid instantly."));
+
+          const list = el("div", "vote-list");
+          players.forEach((p) => {
+            const b = el("button", "", nameOf(p.user_id));
+            b.type = "button";
+            b.setAttribute("aria-pressed", String(selectedVote === p.user_id));
+            b.addEventListener("click", () => {
+              selectedVote = p.user_id;
+              renderPanel();
+            });
+            list.append(b);
+          });
+          panel.append(list);
+
+          const confirmText = selectedVote ? "Confirm vote for " + nameOf(selectedVote) : "Choose the winner";
+          const confirmBtn = button(confirmText, "btn-primary", submitVote);
+          confirmBtn.disabled = busy || !selectedVote;
+          panel.append(confirmBtn);
+        } else {
+          panel.append(el("h2", "", "Vote recorded"));
+          panel.append(el("p", "hint", "You voted for " + nameOf(mine.vote_for) + ". " + votedCount + " of " + players.length + " players have voted."));
+          panel.append(el("p", "hint", "If someone hasn't voted 30 minutes after the first vote, the player with the most votes wins."));
+        }
+        return;
+      }
+
+      const box = el("div", "result");
+
+      if (room.status === "settled") {
+        const amount = naira(room.pot - room.fee);
+        if (room.winner_id === me) {
+          box.append(el("p", "big", "You won " + amount));
+          box.append(el("p", "", "It's already in your wallet."));
+        } else {
+          box.append(el("p", "big", nameOf(room.winner_id) + " won " + amount));
+          box.append(el("p", "", "Better luck next game."));
+        }
+      } else if (room.status === "disputed") {
+        box.append(el("p", "big", "Under review"));
+        box.append(el("p", "", "The votes didn't match. An admin will review this room and pick the winner. The pot stays locked until then."));
+      } else if (room.status === "cancelled") {
+        box.append(el("p", "big", "Room cancelled"));
+        box.append(el("p", "", "Every player's stake was refunded to their wallet."));
+      }
+
+      panel.append(box);
+      const home = el("a", "btn btn-secondary", "Back home");
+      home.href = "index.html";
+      panel.append(home);
+    }
+
+    async function run(action) {
+      if (busy) return;
+      busy = true;
+      $("error").textContent = "";
+      renderPanel();
+      try {
+        await action();
+        await load();
+      } catch (err) {
+        const text = err.message || "Something went wrong. Try again.";
+        setError(text, /balance/i.test(text));
+      } finally {
+        busy = false;
+        if (room) renderPanel();
+      }
+    }
+
+    function joinRoom() {
+      run(async () => {
+        const { error } = await sb.rpc("join_room", { room_code: room.code });
+        if (error) throw error;
+      });
+    }
+
+    function leaveRoom() {
+      const isHost = room.host_id === me;
+      const question = isHost
+        ? "Cancel this room? Every player gets their stake back."
+        : "Leave this room? Your stake goes back to your wallet.";
+      if (!window.confirm(question)) return;
+
+      run(async () => {
+        const { error } = await sb.rpc("leave_room", { p_room_id: room.id });
+        if (error) throw error;
+      });
+    }
+
+    function submitVote() {
+      if (!selectedVote) return;
+      run(async () => {
+        const { error } = await sb.rpc("submit_vote", { p_room_id: room.id, p_winner: selectedVote });
+        if (error) throw error;
+        selectedVote = null;
+      });
+    }
+
+    async function shareInvite() {
+      const url = window.location.origin + window.location.pathname + "?code=" + room.code;
+      const text = "Join my " + room.game + " room on splitpot. Stake " + naira(room.stake) + ". Code: " + room.code;
+
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: "splitpot room", text, url });
+          return;
+        }
+        await navigator.clipboard.writeText(text + " " + url);
+        $("shareBtn").textContent = "Invite copied";
+        setTimeout(() => { $("shareBtn").textContent = "Share invite"; }, 2000);
+      } catch (err) {
+        if (err.name !== "AbortError") setError("Could not share. Send your friends the code " + room.code + ".");
+      }
+    }
+
+    function subscribe() {
+      channel = sb
+        .channel("room-" + room.id)
+        .on("postgres_changes", { event: "*", schema: "public", table: "rooms", filter: "id=eq." + room.id }, () => load())
+        .on("postgres_changes", { event: "*", schema: "public", table: "room_players", filter: "room_id=eq." + room.id }, () => load())
+        .subscribe();
+    }
+
+    $("shareBtn").addEventListener("click", shareInvite);
+
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        const next = "room.html?code=" + encodeURIComponent(code);
+        window.location.replace("login.html?next=" + encodeURIComponent(next));
+        return;
+      }
+      me = session.user.id;
+
+      if (!/^[A-Z0-9]{6}$/.test(code)) {
+        showMessage("That isn't a valid room code.", "Enter a code", "join.html");
+        return;
+      }
+
+      try {
+        if (await load()) subscribe();
+      } catch (err) {
+        showMessage(err.message || "Could not load this room.", "Try again", window.location.href);
+      }
+    })();
+  </script>
+</body>
+</html>
