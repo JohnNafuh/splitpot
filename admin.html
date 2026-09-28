@@ -21,7 +21,30 @@
   <style>
     .admin {
       padding-top: 24px;
-      padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .admin-tag {
+      padding: 4px 10px;
+      border: 1px solid var(--brass);
+      border-radius: 999px;
+      color: var(--brass);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .link-btn {
+      padding: 6px 4px;
+      border: 0;
+      background: transparent;
+      color: var(--moss);
+      font-size: 0.9rem;
     }
 
     .admin h1 {
@@ -32,7 +55,7 @@
     }
 
     .admin h2 {
-      margin-top: 32px;
+      margin-top: 36px;
       font-size: 1.15rem;
       font-weight: 800;
       letter-spacing: -0.01em;
@@ -44,6 +67,164 @@
       line-height: 1.45;
     }
 
+    /* Sign in */
+    .signin-form {
+      display: grid;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .signin-form label {
+      display: grid;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--moss);
+    }
+
+    .signin-form input {
+      width: 100%;
+      min-height: 52px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(8, 36, 25, 0.45);
+      color: var(--chalk);
+      font: inherit;
+      font-size: 1.05rem;
+    }
+
+    .signin-form input:focus {
+      outline: none;
+      border-color: var(--brass);
+    }
+
+    .signin-form .btn {
+      margin-top: 6px;
+      border: 0;
+    }
+
+    .signin-form .btn:disabled {
+      opacity: 0.6;
+    }
+
+    /* Earnings */
+    .today {
+      margin-top: 20px;
+    }
+
+    .today .label {
+      font-size: 0.9rem;
+      color: var(--moss);
+    }
+
+    .today .big {
+      margin-top: 4px;
+      font-size: clamp(2.6rem, 12vw, 3.4rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      color: var(--brass);
+    }
+
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .tiles div {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(8, 36, 25, 0.45);
+    }
+
+    .tiles dt {
+      font-size: 0.8rem;
+      color: var(--moss);
+    }
+
+    .tiles dd {
+      margin: 4px 0 0;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .chart {
+      margin-top: 18px;
+      padding: 14px 12px 10px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(8, 36, 25, 0.45);
+    }
+
+    .chart .chart-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--moss);
+    }
+
+    .bars {
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      align-items: end;
+      gap: 4px;
+      height: 120px;
+      margin-top: 12px;
+    }
+
+    .bar {
+      min-height: 3px;
+      border-radius: 4px 4px 1px 1px;
+      background: var(--brass-deep);
+    }
+
+    .bar.today-bar {
+      background: var(--brass);
+    }
+
+    .bar-labels {
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      gap: 4px;
+      margin-top: 6px;
+      font-size: 0.7rem;
+      color: var(--moss);
+      text-align: center;
+    }
+
+    .stat-list {
+      margin-top: 12px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+
+    .stat-list div {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .stat-list div:last-child {
+      border-bottom: 0;
+    }
+
+    .stat-list dt {
+      color: var(--moss);
+    }
+
+    .stat-list dd {
+      margin: 0;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    /* Disputes */
     .dispute {
       margin-top: 14px;
       padding: 16px;
@@ -153,7 +334,7 @@
 
     .error {
       min-height: 1.4em;
-      margin-top: 16px;
+      margin-top: 12px;
       color: #F2A39A;
       line-height: 1.4;
     }
@@ -162,24 +343,81 @@
 <body>
 
   <header class="topbar">
-    <a class="wordmark" href="index.html">splitpot</a>
+    <a class="wordmark" href="admin.html">splitpot</a>
+    <div class="topbar-right">
+      <span class="admin-tag">Admin</span>
+      <button class="link-btn" type="button" id="signOutBtn" hidden>Sign out</button>
+    </div>
   </header>
 
   <main class="admin">
-    <h1>Disputes</h1>
-    <p class="muted" id="intro">Checking access…</p>
+    <p class="muted" id="loading">Loading…</p>
 
-    <div id="adminView" hidden>
-      <h2 id="openHeading">Open</h2>
+    <!-- Admin sign in -->
+    <section id="signinView" hidden>
+      <h1>Admin sign in</h1>
+      <p class="muted">For the splitpot admin account only. This is separate from your player login.</p>
+
+      <form class="signin-form" id="signinForm" novalidate>
+        <label>Email
+          <input id="email" type="email" autocomplete="username" inputmode="email" required>
+        </label>
+        <label>Password
+          <input id="password" type="password" autocomplete="current-password" required>
+        </label>
+        <button class="btn btn-primary" type="submit" id="signinBtn">Sign in</button>
+        <p class="error" id="signinError" role="alert"></p>
+      </form>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashView" hidden>
+      <h1>Earnings</h1>
+
+      <div class="today">
+        <p class="label">Profit today</p>
+        <p class="big" id="earnToday">₦0</p>
+      </div>
+
+      <dl class="tiles">
+        <div><dt>This week</dt><dd id="earnWeek">₦0</dd></div>
+        <div><dt>This month</dt><dd id="earnMonth">₦0</dd></div>
+        <div><dt>All time</dt><dd id="earnAll">₦0</dd></div>
+      </dl>
+
+      <div class="chart">
+        <div class="chart-top">
+          <span>Last 14 days</span>
+          <span id="chartMax"></span>
+        </div>
+        <div class="bars" id="bars"></div>
+        <div class="bar-labels" id="barLabels"></div>
+      </div>
+
+      <h2>Activity</h2>
+      <dl class="stat-list">
+        <div><dt>Games settled</dt><dd id="statGames">0</dd></div>
+        <div><dt>Money played (pots)</dt><dd id="statVolume">₦0</dd></div>
+      </dl>
+
+      <h2>Money you're holding</h2>
+      <p class="muted">This belongs to players, not you. With real money, it must always be in your account.</p>
+      <dl class="stat-list">
+        <div><dt>Player balances</dt><dd id="statBalances">₦0</dd></div>
+        <div><dt>Locked in active rooms</dt><dd id="statLocked">₦0</dd></div>
+        <div><dt>Test money given out</dt><dd id="statTest">₦0</dd></div>
+      </dl>
+
+      <h2 id="openHeading">Disputes</h2>
       <div id="openList"></div>
       <p class="muted" id="openEmpty" hidden>No open disputes. Every room is settled.</p>
 
       <h2>Recently resolved</h2>
       <ul class="resolved" id="resolvedList"></ul>
       <p class="muted" id="resolvedEmpty" hidden>Nothing resolved yet.</p>
-    </div>
 
-    <p class="error" id="error" role="alert"></p>
+      <p class="error" id="error" role="alert"></p>
+    </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -187,12 +425,25 @@
   <script src="fees.js"></script>
 
   <script>
+    // The admin page keeps its own login, separate from the player app,
+    // so signing in here never signs you out as a player (and the reverse).
+    const adminSb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { storageKey: "splitpot-admin-auth" }
+    });
+
     const $ = (id) => document.getElementById(id);
-    const naira = (kobo) => "₦" + Math.round(kobo / 100).toLocaleString("en-NG");
+    const naira = (kobo) => "₦" + Math.round(Number(kobo) / 100).toLocaleString("en-NG");
     const when = (iso) => new Date(iso).toLocaleString("en-NG", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
     let names = {};
     let busy = false;
+
+    function show(view) {
+      $("loading").hidden = true;
+      $("signinView").hidden = view !== "signin";
+      $("dashView").hidden = view !== "dash";
+      $("signOutBtn").hidden = view !== "dash";
+    }
 
     function el(tag, className, text) {
       const node = document.createElement(tag);
@@ -203,21 +454,101 @@
 
     const nameOf = (id) => names[id] || "Player";
 
+    // ----- Sign in -----
+    $("signinForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      $("signinError").textContent = "";
+
+      const email = $("email").value.trim();
+      const password = $("password").value;
+      if (!email || !password) {
+        $("signinError").textContent = "Enter the admin email and password.";
+        return;
+      }
+
+      $("signinBtn").disabled = true;
+      $("signinBtn").textContent = "Signing in…";
+
+      try {
+        const { error } = await adminSb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        const { data: isAdmin, error: adminError } = await adminSb.rpc("is_admin");
+        if (adminError) throw adminError;
+
+        if (!isAdmin) {
+          await adminSb.auth.signOut();
+          $("signinError").textContent = "This account isn't an admin.";
+          return;
+        }
+
+        $("password").value = "";
+        await openDashboard();
+      } catch (err) {
+        $("signinError").textContent = err.message || "Could not sign in.";
+      } finally {
+        $("signinBtn").disabled = false;
+        $("signinBtn").textContent = "Sign in";
+      }
+    });
+
+    $("signOutBtn").addEventListener("click", async () => {
+      await adminSb.auth.signOut();
+      show("signin");
+    });
+
+    // ----- Earnings -----
+    async function loadEarnings() {
+      const { data: e, error } = await adminSb.rpc("admin_earnings");
+      if (error) throw error;
+
+      $("earnToday").textContent = naira(e.today);
+      $("earnWeek").textContent = naira(e.week);
+      $("earnMonth").textContent = naira(e.month);
+      $("earnAll").textContent = naira(e.all_time);
+      $("statGames").textContent = Number(e.games_settled).toLocaleString("en-NG");
+      $("statVolume").textContent = naira(e.volume);
+      $("statBalances").textContent = naira(e.player_balances);
+      $("statLocked").textContent = naira(e.locked);
+      $("statTest").textContent = naira(e.test_money);
+
+      const days = e.daily || [];
+      const max = Math.max(0, ...days.map((d) => Number(d.total)));
+      $("chartMax").textContent = max ? "Best day " + naira(max) : "No fees yet";
+
+      const bars = $("bars");
+      const labels = $("barLabels");
+      bars.innerHTML = "";
+      labels.innerHTML = "";
+
+      days.forEach((d, i) => {
+        const total = Number(d.total);
+        const bar = el("div", "bar" + (i === days.length - 1 ? " today-bar" : ""));
+        bar.style.height = max ? Math.max(2, (total / max) * 100) + "%" : "2%";
+        const date = new Date(d.day + "T12:00:00");
+        const label = date.toLocaleDateString("en-NG", { day: "numeric", month: "short" });
+        bar.title = label + ": " + naira(total);
+        bar.setAttribute("aria-label", label + ": " + naira(total));
+        bars.append(bar);
+        labels.append(el("span", "", i % 2 === 1 ? String(date.getDate()) : ""));
+      });
+    }
+
+    // ----- Disputes -----
     async function loadNames(ids) {
       const missing = [...new Set(ids)].filter((id) => id && !names[id]);
       if (!missing.length) return;
-      const { data, error } = await sb.from("profiles").select("id, username").in("id", missing);
+      const { data, error } = await adminSb.from("profiles").select("id, username").in("id", missing);
       if (error) throw error;
       data.forEach((p) => { names[p.id] = p.username; });
     }
 
-    async function load() {
-      const { data: disputes, error } = await sb
+    async function loadDisputes() {
+      const { data: disputes, error } = await adminSb
         .from("disputes")
         .select("*, rooms(*)")
         .order("created_at", { ascending: false })
         .limit(60);
-
       if (error) throw error;
 
       const open = disputes.filter((d) => d.status === "open" && d.rooms);
@@ -225,7 +556,7 @@
 
       let players = [];
       if (open.length) {
-        const { data, error: pError } = await sb
+        const { data, error: pError } = await adminSb
           .from("room_players")
           .select("room_id, user_id, vote_for")
           .in("room_id", open.map((d) => d.room_id));
@@ -233,11 +564,7 @@
         players = data;
       }
 
-      await loadNames([
-        ...players.map((p) => p.user_id),
-        ...resolved.map((d) => d.resolved_winner)
-      ]);
-
+      await loadNames([...players.map((p) => p.user_id), ...resolved.map((d) => d.resolved_winner)]);
       renderOpen(open, players);
       renderResolved(resolved);
     }
@@ -245,7 +572,7 @@
     function renderOpen(open, players) {
       const list = $("openList");
       list.innerHTML = "";
-      $("openHeading").textContent = "Open (" + open.length + ")";
+      $("openHeading").textContent = open.length ? "Disputes (" + open.length + ")" : "Disputes";
       $("openEmpty").hidden = open.length > 0;
 
       open.forEach((d) => {
@@ -254,7 +581,6 @@
         const winnerGets = room.pot - splitpotFee(room.pot).fee;
 
         const card = el("article", "dispute");
-
         const head = el("div", "dispute-head");
         head.append(el("span", "game", room.game), el("span", "pot", "Pot " + naira(room.pot)));
         card.append(head);
@@ -314,7 +640,7 @@
           : "Refunded everyone";
         li.append(
           el("p", "line", room.game + " · " + outcome),
-          el("p", "meta", "Room " + room.code + " · " + (d.resolved_at ? when(d.resolved_at) : ""))
+          el("p", "meta", "Room " + room.code + (d.resolved_at ? " · " + when(d.resolved_at) : ""))
         );
         list.append(li);
       });
@@ -333,44 +659,46 @@
       document.querySelectorAll(".decide .btn").forEach((b) => { b.disabled = true; });
 
       try {
-        const { error } = await sb.rpc("resolve_dispute", { p_room_id: room.id, p_winner: winnerId });
+        const { error } = await adminSb.rpc("resolve_dispute", { p_room_id: room.id, p_winner: winnerId });
         if (error) throw error;
       } catch (err) {
         $("error").textContent = err.message || "Could not resolve this dispute.";
       } finally {
         busy = false;
-        try {
-          await load();
-        } catch (err) {
-          $("error").textContent = err.message || "Could not reload disputes.";
-        }
+        await refreshAll();
       }
     }
 
+    async function refreshAll() {
+      try {
+        await Promise.all([loadEarnings(), loadDisputes()]);
+      } catch (err) {
+        $("error").textContent = err.message || "Could not load the dashboard.";
+      }
+    }
+
+    async function openDashboard() {
+      show("dash");
+      await splitpotFeeReady;
+      await refreshAll();
+    }
+
+    // ----- Start -----
     (async () => {
-      const { data: { session } } = await sb.auth.getSession();
+      const { data: { session } } = await adminSb.auth.getSession();
       if (!session) {
-        window.location.replace("login.html?next=admin.html");
+        show("signin");
         return;
       }
 
-      try {
-        const { data: isAdmin, error } = await sb.rpc("is_admin");
-        if (error) throw error;
-
-        if (!isAdmin) {
-          $("intro").textContent = "This page is for admins only.";
-          return;
-        }
-
-        $("intro").textContent = "Votes didn't match in these rooms. The pot stays locked until you decide.";
-        $("adminView").hidden = false;
-        await splitpotFeeReady;
-        await load();
-      } catch (err) {
-        $("intro").textContent = "";
-        $("error").textContent = err.message || "Could not load the admin page.";
+      const { data: isAdmin, error } = await adminSb.rpc("is_admin");
+      if (error || !isAdmin) {
+        await adminSb.auth.signOut();
+        show("signin");
+        return;
       }
+
+      await openDashboard();
     })();
   </script>
 </body>
