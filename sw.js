@@ -1,7 +1,7 @@
 // splitpot service worker
 // Always tries the network first, so updates show up straight away.
 // Falls back to the last saved copy, then to offline.html, when there's no connection.
-const CACHE = "splitpot-v1";
+const CACHE = "splitpot-v2";
 const SHELL = ["./", "index.html", "offline.html", "style.css?v=3", "icon-192.png"];
 
 self.addEventListener("install", (event) => {
@@ -40,5 +40,41 @@ self.addEventListener("fetch", (event) => {
         if (request.mode === "navigate") return caches.match("offline.html");
         return Response.error();
       })
+  );
+});
+
+// Show a push sent by the send-push Edge Function
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (err) {
+    data = { body: event.data ? event.data.text() : "" };
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || "splitpot", {
+      body: data.body || "You have a new notification.",
+      icon: "icon-192.png",
+      badge: "icon-192.png",
+      data: { url: data.url || "notifications.html" }
+    })
+  );
+});
+
+// Tapping a push opens the room it's about
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data.url, self.registration.scope).href;
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      for (const win of windows) {
+        if ("navigate" in win) {
+          return win.focus().then(() => win.navigate(target));
+        }
+      }
+      return self.clients.openWindow(target);
+    })
   );
 });

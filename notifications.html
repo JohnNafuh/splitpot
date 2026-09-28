@@ -68,6 +68,41 @@
       color: var(--moss);
     }
 
+    .push-card {
+      margin-top: 20px;
+      padding: 16px;
+      border: 1px solid rgba(227, 179, 65, 0.4);
+      border-radius: 18px;
+      background: rgba(227, 179, 65, 0.08);
+    }
+
+    .push-card .title {
+      font-weight: 800;
+    }
+
+    .push-card .text {
+      margin-top: 4px;
+      color: var(--moss);
+      line-height: 1.45;
+    }
+
+    .push-card .btn {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 14px;
+      border: 0;
+      font-size: 1rem;
+    }
+
+    .push-card .btn-secondary {
+      border: 1.5px solid var(--line);
+      background: transparent;
+    }
+
+    .push-card .btn:disabled {
+      opacity: 0.5;
+    }
+
     .empty {
       margin-top: 16px;
       color: var(--moss);
@@ -88,6 +123,12 @@
 
   <main class="inbox">
     <h1>Notifications</h1>
+
+    <section class="push-card" id="pushCard" hidden>
+      <p class="title" id="pushTitle"></p>
+      <p class="text" id="pushText"></p>
+      <button class="btn btn-primary" type="button" id="pushBtn" hidden></button>
+    </section>
     <ul class="note-list" id="list"></ul>
     <p class="empty" id="empty" hidden>No notifications yet. You'll hear here when friends join your rooms, when it's time to vote, and when games are paid out.</p>
     <p class="error" id="error" role="alert"></p>
@@ -118,6 +159,98 @@
 
   <script>
     let me = null;
+
+    // ----- Phone push notifications -----
+    const VAPID_PUBLIC_KEY = "BKdCCZIqLZYuHID8tOwzyjKFWBgIp18oPIXOmzJxS5ULYld6w6snQyIf1TCeJVFMeQRboUEl9EeWjAJIYg1aeT4";
+
+    function keyToBytes(base64) {
+      const padded = (base64 + "=".repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, "+").replace(/_/g, "/");
+      const raw = atob(padded);
+      return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+    }
+
+    function showPush(title, text, buttonText, kind) {
+      document.getElementById("pushCard").hidden = false;
+      document.getElementById("pushTitle").textContent = title;
+      document.getElementById("pushText").textContent = text;
+      const btn = document.getElementById("pushBtn");
+      btn.hidden = !buttonText;
+      btn.disabled = false;
+      if (buttonText) {
+        btn.textContent = buttonText;
+        btn.className = "btn " + (kind || "btn-primary");
+      }
+    }
+
+    async function saveSubscription(sub) {
+      const json = sub.toJSON();
+      const { error } = await sb.rpc("save_push_subscription", {
+        p_endpoint: json.endpoint,
+        p_p256dh: json.keys.p256dh,
+        p_auth: json.keys.auth
+      });
+      if (error) throw error;
+    }
+
+    async function setupPush() {
+      const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+      const installed = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+
+      if (!supported) {
+        if (/iPhone|iPad/.test(navigator.userAgent) && !installed) {
+          showPush("Get alerts on your phone", "Add splitpot to your home screen first (Share → Add to Home Screen), then open it from there and turn on notifications.");
+        } else {
+          showPush("Phone alerts aren't available", "This browser doesn't support push notifications. You'll still see everything here.");
+        }
+        return;
+      }
+
+      if (Notification.permission === "denied") {
+        showPush("Notifications are blocked", "Turn them on for splitpot in your phone's Settings → Notifications, then come back here.");
+        return;
+      }
+
+      const reg = await navigator.serviceWorker.ready;
+      const existing = await reg.pushManager.getSubscription();
+
+      if (existing && Notification.permission === "granted") {
+        await saveSubscription(existing);
+        showPush("Notifications are on", "This phone gets an alert when friends join, when it's time to vote, and when games are paid out.", "Turn off on this phone", "btn-secondary");
+      } else {
+        showPush("Get alerts on your phone", "Know the moment a friend joins, when it's time to vote, and when you win, even with splitpot closed.", "Turn on notifications");
+      }
+    }
+
+    document.getElementById("pushBtn").addEventListener("click", async () => {
+      const btn = document.getElementById("pushBtn");
+      btn.disabled = true;
+
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const existing = await reg.pushManager.getSubscription();
+
+        if (existing && Notification.permission === "granted") {
+          const endpoint = existing.endpoint;
+          await existing.unsubscribe();
+          await sb.rpc("remove_push_subscription", { p_endpoint: endpoint });
+        } else {
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted") {
+            await setupPush();
+            return;
+          }
+          const sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: keyToBytes(VAPID_PUBLIC_KEY)
+          });
+          await saveSubscription(sub);
+        }
+
+        await setupPush();
+      } catch (err) {
+        showPush("Something went wrong", err.message || "Could not change notification settings. Try again.", "Try again");
+      }
+    });
 
     function timeAgo(iso) {
       const seconds = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -178,6 +311,8 @@
         return;
       }
       me = session.user.id;
+
+      setupPush().catch((err) => console.error("Push setup failed:", err));
 
       try {
         await load();
