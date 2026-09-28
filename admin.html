@@ -1,1 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0E3A2C">
+  <meta name="robots" content="noindex">
+  <title>Admin · splitpot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=3">
+  <style>
+    .admin {
+      padding-top: 24px;
+      padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+    }
 
+    .admin h1 {
+      font-size: clamp(1.9rem, 8vw, 2.3rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+    }
+
+    .admin h2 {
+      margin-top: 32px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .muted {
+      margin-top: 8px;
+      color: var(--moss);
+      line-height: 1.45;
+    }
+
+    .dispute {
+      margin-top: 14px;
+      padding: 16px;
+      border: 1px solid rgba(227, 179, 65, 0.4);
+      border-radius: 18px;
+      background: rgba(8, 36, 25, 0.45);
+    }
+
+    .dispute-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .dispute-head .game {
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+
+    .dispute-head .pot {
+      font-weight: 800;
+      color: var(--brass);
+      white-space: nowrap;
+    }
+
+    .dispute .meta {
+      margin-top: 2px;
+      font-size: 0.9rem;
+      color: var(--moss);
+    }
+
+    .dispute .reason {
+      margin-top: 12px;
+      line-height: 1.45;
+    }
+
+    .dispute .reason a {
+      color: var(--brass);
+      text-decoration: underline;
+    }
+
+    .votes {
+      margin-top: 12px;
+      padding: 0;
+      list-style: none;
+      border-top: 1px solid var(--line);
+    }
+
+    .votes li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .votes .who {
+      font-weight: 600;
+    }
+
+    .votes .vote {
+      color: var(--moss);
+      text-align: right;
+    }
+
+    .decide {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .decide .btn {
+      min-height: 48px;
+      border: 0;
+      font-size: 1rem;
+    }
+
+    .decide .btn-secondary {
+      border: 1.5px solid var(--line);
+      background: transparent;
+    }
+
+    .decide .btn:disabled {
+      opacity: 0.5;
+    }
+
+    .resolved {
+      margin-top: 12px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .resolved li {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .resolved .line {
+      font-weight: 600;
+    }
+
+    .resolved .meta {
+      margin-top: 2px;
+      font-size: 0.9rem;
+      color: var(--moss);
+    }
+
+    .error {
+      min-height: 1.4em;
+      margin-top: 16px;
+      color: #F2A39A;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="wordmark" href="index.html">splitpot</a>
+  </header>
+
+  <main class="admin">
+    <h1>Disputes</h1>
+    <p class="muted" id="intro">Checking access…</p>
+
+    <div id="adminView" hidden>
+      <h2 id="openHeading">Open</h2>
+      <div id="openList"></div>
+      <p class="muted" id="openEmpty" hidden>No open disputes. Every room is settled.</p>
+
+      <h2>Recently resolved</h2>
+      <ul class="resolved" id="resolvedList"></ul>
+      <p class="muted" id="resolvedEmpty" hidden>Nothing resolved yet.</p>
+    </div>
+
+    <p class="error" id="error" role="alert"></p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const naira = (kobo) => "₦" + Math.round(kobo / 100).toLocaleString("en-NG");
+    const when = (iso) => new Date(iso).toLocaleString("en-NG", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+
+    let names = {};
+    let busy = false;
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    const nameOf = (id) => names[id] || "Player";
+
+    async function loadNames(ids) {
+      const missing = [...new Set(ids)].filter((id) => id && !names[id]);
+      if (!missing.length) return;
+      const { data, error } = await sb.from("profiles").select("id, username").in("id", missing);
+      if (error) throw error;
+      data.forEach((p) => { names[p.id] = p.username; });
+    }
+
+    async function load() {
+      const { data: disputes, error } = await sb
+        .from("disputes")
+        .select("*, rooms(*)")
+        .order("created_at", { ascending: false })
+        .limit(60);
+
+      if (error) throw error;
+
+      const open = disputes.filter((d) => d.status === "open" && d.rooms);
+      const resolved = disputes.filter((d) => d.status === "resolved" && d.rooms).slice(0, 20);
+
+      let players = [];
+      if (open.length) {
+        const { data, error: pError } = await sb
+          .from("room_players")
+          .select("room_id, user_id, vote_for")
+          .in("room_id", open.map((d) => d.room_id));
+        if (pError) throw pError;
+        players = data;
+      }
+
+      await loadNames([
+        ...players.map((p) => p.user_id),
+        ...resolved.map((d) => d.resolved_winner)
+      ]);
+
+      renderOpen(open, players);
+      renderResolved(resolved);
+    }
+
+    function renderOpen(open, players) {
+      const list = $("openList");
+      list.innerHTML = "";
+      $("openHeading").textContent = "Open (" + open.length + ")";
+      $("openEmpty").hidden = open.length > 0;
+
+      open.forEach((d) => {
+        const room = d.rooms;
+        const inRoom = players.filter((p) => p.room_id === room.id);
+        const winnerGets = room.pot - Math.floor((room.pot * 20) / 100);
+
+        const card = el("article", "dispute");
+
+        const head = el("div", "dispute-head");
+        head.append(el("span", "game", room.game), el("span", "pot", "Pot " + naira(room.pot)));
+        card.append(head);
+        card.append(el("p", "meta", "Room " + room.code + " · opened " + when(d.created_at)));
+
+        const reason = el("p", "reason", d.reason);
+        if (d.evidence_url) {
+          const a = el("a", "", "View proof");
+          a.href = d.evidence_url;
+          a.target = "_blank";
+          a.rel = "noopener";
+          reason.append(" ", a);
+        }
+        card.append(reason);
+
+        const votes = el("ul", "votes");
+        inRoom.forEach((p) => {
+          const li = el("li");
+          li.append(
+            el("span", "who", nameOf(p.user_id)),
+            el("span", "vote", p.vote_for ? "voted " + nameOf(p.vote_for) : "didn't vote")
+          );
+          votes.append(li);
+        });
+        card.append(votes);
+
+        const decide = el("div", "decide");
+        inRoom.forEach((p) => {
+          const b = el("button", "btn btn-primary", "Pay " + nameOf(p.user_id) + " " + naira(winnerGets));
+          b.type = "button";
+          b.disabled = busy;
+          b.addEventListener("click", () => resolve(room, p.user_id));
+          decide.append(b);
+        });
+
+        const refund = el("button", "btn btn-secondary", "Refund everyone");
+        refund.type = "button";
+        refund.disabled = busy;
+        refund.addEventListener("click", () => resolve(room, null));
+        decide.append(refund);
+
+        card.append(decide);
+        list.append(card);
+      });
+    }
+
+    function renderResolved(resolved) {
+      const list = $("resolvedList");
+      list.innerHTML = "";
+      $("resolvedEmpty").hidden = resolved.length > 0;
+
+      resolved.forEach((d) => {
+        const room = d.rooms;
+        const li = el("li");
+        const outcome = d.resolved_winner
+          ? "Paid " + nameOf(d.resolved_winner) + " " + naira(room.pot - room.fee)
+          : "Refunded everyone";
+        li.append(
+          el("p", "line", room.game + " · " + outcome),
+          el("p", "meta", "Room " + room.code + " · " + (d.resolved_at ? when(d.resolved_at) : ""))
+        );
+        list.append(li);
+      });
+    }
+
+    async function resolve(room, winnerId) {
+      if (busy) return;
+
+      const question = winnerId
+        ? "Pay " + nameOf(winnerId) + " for room " + room.code + "? This can't be undone."
+        : "Refund every player in room " + room.code + "? This can't be undone.";
+      if (!window.confirm(question)) return;
+
+      busy = true;
+      $("error").textContent = "";
+      document.querySelectorAll(".decide .btn").forEach((b) => { b.disabled = true; });
+
+      try {
+        const { error } = await sb.rpc("resolve_dispute", { p_room_id: room.id, p_winner: winnerId });
+        if (error) throw error;
+      } catch (err) {
+        $("error").textContent = err.message || "Could not resolve this dispute.";
+      } finally {
+        busy = false;
+        try {
+          await load();
+        } catch (err) {
+          $("error").textContent = err.message || "Could not reload disputes.";
+        }
+      }
+    }
+
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        window.location.replace("login.html?next=admin.html");
+        return;
+      }
+
+      try {
+        const { data: isAdmin, error } = await sb.rpc("is_admin");
+        if (error) throw error;
+
+        if (!isAdmin) {
+          $("intro").textContent = "This page is for admins only.";
+          return;
+        }
+
+        $("intro").textContent = "Votes didn't match in these rooms. The pot stays locked until you decide.";
+        $("adminView").hidden = false;
+        await load();
+      } catch (err) {
+        $("intro").textContent = "";
+        $("error").textContent = err.message || "Could not load the admin page.";
+      }
+    })();
+  </script>
+</body>
+</html>
