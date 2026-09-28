@@ -1,1 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0E3A2C">
+  <title>Profile · splitpot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=3">
+  <style>
+    .profile {
+      padding-top: 28px;
+    }
+
+    .who {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .avatar-lg {
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--brass);
+      color: var(--felt-deep);
+      font-size: 1.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .who h1 {
+      font-size: clamp(1.6rem, 7vw, 2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      overflow-wrap: anywhere;
+    }
+
+    .who .email {
+      margin-top: 4px;
+      color: var(--moss);
+      overflow-wrap: anywhere;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .stats div {
+      padding: 14px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(8, 36, 25, 0.45);
+    }
+
+    .stats dt {
+      font-size: 0.8rem;
+      color: var(--moss);
+    }
+
+    .stats dd {
+      margin: 4px 0 0;
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+
+    .stats .gold dd {
+      color: var(--brass);
+    }
+
+    .profile h2 {
+      margin-top: 32px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .username-form {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .username-form input {
+      width: 100%;
+      min-height: 52px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(8, 36, 25, 0.45);
+      color: var(--chalk);
+      font: inherit;
+      font-size: 1.05rem;
+    }
+
+    .username-form input:focus {
+      outline: none;
+      border-color: var(--brass);
+    }
+
+    .profile .btn {
+      width: 100%;
+      border: 0;
+    }
+
+    .profile .btn:disabled {
+      opacity: 0.5;
+    }
+
+    .profile .btn-secondary {
+      border: 1.5px solid var(--line);
+      background: transparent;
+    }
+
+    .status {
+      min-height: 1.4em;
+      line-height: 1.4;
+    }
+
+    .status.ok { color: #8FD6A8; }
+    .status.bad { color: #F2A39A; }
+
+    .signout {
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="wordmark" href="index.html">splitpot</a>
+  </header>
+
+  <main class="profile">
+    <div class="who">
+      <span class="avatar-lg" id="avatar">?</span>
+      <div>
+        <h1 id="username">Loading…</h1>
+        <p class="email" id="email"></p>
+      </div>
+    </div>
+
+    <dl class="stats">
+      <div><dt>Played</dt><dd id="played">0</dd></div>
+      <div><dt>Won</dt><dd id="won">0</dd></div>
+      <div class="gold"><dt>Winnings</dt><dd id="winnings">₦0</dd></div>
+    </dl>
+
+    <h2>Change username</h2>
+    <form class="username-form" id="usernameForm" novalidate>
+      <input id="newUsername" type="text" maxlength="20" autocomplete="username" autocapitalize="off" spellcheck="false" aria-label="New username">
+      <button class="btn btn-secondary" type="submit" id="saveBtn">Save username</button>
+      <p class="status" id="status" role="status"></p>
+    </form>
+
+    <div class="signout">
+      <button class="btn btn-secondary" type="button" id="signOutBtn">Sign out</button>
+    </div>
+  </main>
+
+  <nav class="tabbar" aria-label="Main">
+    <a href="index.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+      <span>Home</span>
+    </a>
+    <a href="rooms.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.6c2.6.1 4.6 1.9 5.3 5.1"/></svg>
+      <span>Rooms</span>
+    </a>
+    <a href="wallet.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="15" r="1.2"/></svg>
+      <span>Wallet</span>
+    </a>
+    <a href="profile.html" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4 4.3-6 8-6s6.8 2 8 6"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const naira = (kobo) => "₦" + Math.round(kobo / 100).toLocaleString("en-NG");
+
+    let me = null;
+    let currentName = "";
+
+    function setStatus(text, kind) {
+      $("status").textContent = text;
+      $("status").className = "status" + (kind ? " " + kind : "");
+    }
+
+    function showName(name) {
+      currentName = name;
+      $("username").textContent = name;
+      $("avatar").textContent = name.charAt(0);
+      $("newUsername").value = name;
+    }
+
+    async function loadProfile() {
+      const { data, error } = await sb.from("profiles").select("username").eq("id", me).maybeSingle();
+      if (error) throw error;
+      if (!data) {
+        window.location.replace("login.html?next=profile.html");
+        return;
+      }
+      showName(data.username);
+    }
+
+    async function loadStats() {
+      const { data, error } = await sb
+        .from("room_players")
+        .select("rooms(status, winner_id, pot, fee)")
+        .eq("user_id", me);
+
+      if (error) throw error;
+
+      const settled = data.map((row) => row.rooms).filter((room) => room && room.status === "settled");
+      const wins = settled.filter((room) => room.winner_id === me);
+      const total = wins.reduce((sum, room) => sum + (room.pot - room.fee), 0);
+
+      $("played").textContent = settled.length;
+      $("won").textContent = wins.length;
+      $("winnings").textContent = naira(total);
+    }
+
+    $("usernameForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const name = $("newUsername").value.trim();
+
+      if (name === currentName) {
+        setStatus("That's already your username.");
+        return;
+      }
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(name)) {
+        setStatus("Use 3 to 20 letters, numbers or underscores.", "bad");
+        return;
+      }
+
+      $("saveBtn").disabled = true;
+      setStatus("Saving…");
+
+      try {
+        const { error } = await sb.from("profiles").update({ username: name }).eq("id", me);
+        if (error) {
+          if (error.code === "23505") {
+            setStatus("That username is taken. Try another.", "bad");
+            return;
+          }
+          throw error;
+        }
+        showName(name);
+        setStatus("Username updated.", "ok");
+      } catch (err) {
+        setStatus(err.message || "Could not update your username.", "bad");
+      } finally {
+        $("saveBtn").disabled = false;
+      }
+    });
+
+    $("signOutBtn").addEventListener("click", async () => {
+      $("signOutBtn").disabled = true;
+      await sb.auth.signOut();
+      window.location.href = "index.html";
+    });
+
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        window.location.replace("login.html?next=profile.html");
+        return;
+      }
+
+      me = session.user.id;
+      $("email").textContent = session.user.email || "";
+
+      try {
+        await Promise.all([loadProfile(), loadStats()]);
+      } catch (err) {
+        setStatus(err.message || "Could not load your profile.", "bad");
+      }
+    })();
+  </script>
+</body>
+</html>
 
