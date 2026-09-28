@@ -70,6 +70,8 @@
       width: 100%;
       min-height: 48px;
       margin-top: 14px;
+      border: 1.5px solid var(--line);
+      background: transparent;
       font-size: 1rem;
     }
 
@@ -280,8 +282,10 @@
       <h2 id="playersHeading">Players</h2>
       <ul class="players" id="players"></ul>
 
-      <section class="panel" id="panel"></section>
-      <p class="error" id="error" role="alert"></p>
+      <div id="actionArea">
+        <section class="panel" id="panel"></section>
+        <p class="error" id="error" role="alert"></p>
+      </div>
     </div>
   </main>
 
@@ -412,7 +416,17 @@
       $("statusPill").textContent = STATUS[room.status] || room.status;
       $("statusPill").dataset.status = room.status;
       $("roomCode").textContent = room.code;
-      $("codeBox").hidden = room.status !== "waiting";
+      const isMember = players.some((p) => p.user_id === me);
+      $("codeBox").hidden = !(room.status === "waiting" && isMember);
+
+      // People who haven't joined see the Join button near the top
+      const view = $("roomView");
+      const actionArea = $("actionArea");
+      if (room.status === "waiting" && !isMember) {
+        view.insertBefore(actionArea, $("playersHeading"));
+      } else {
+        view.append(actionArea);
+      }
       $("statStake").textContent = naira(room.stake);
       $("statPot").textContent = naira(room.pot);
       $("statWin").textContent = naira(winnings);
