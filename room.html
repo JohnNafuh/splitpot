@@ -310,6 +310,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
+  <script src="fees.js"></script>
   <script src="notify.js"></script>
 
   <script>
@@ -411,7 +412,7 @@
       document.title = room.game + " · splitpot";
 
       const fullPot = room.stake * room.max_players;
-      const winnings = room.status === "settled" ? room.pot - room.fee : fullPot * 0.8;
+      const winnings = room.status === "settled" ? room.pot - room.fee : fullPot - splitpotFee(fullPot).fee;
 
       $("gameName").textContent = room.game;
       $("statusPill").textContent = STATUS[room.status] || room.status;
@@ -631,6 +632,7 @@
       }
 
       try {
+        await splitpotFeeReady;
         if (await load()) subscribe();
       } catch (err) {
         showMessage(err.message || "Could not load this room.", "Try again", window.location.href);

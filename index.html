@@ -89,10 +89,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
+  <script src="fees.js"></script>
   <script src="notify.js"></script>
 
   <script>
-    const FEE = 0.20;
     const MIN_PLAYERS = 2;
     const MAX_PLAYERS = 8;
     let players = 4;
@@ -123,7 +123,8 @@
     function render() {
       const stake = Math.max(0, Number(stakeEl.value) || 0);
       const pot = stake * players;
-      const fee = pot * FEE;
+      const feeInfo = splitpotFee(pot * 100);
+      const fee = feeInfo.fee / 100;
       const winnings = pot - fee;
 
       const step = (Math.PI * 2) / players;
@@ -138,7 +139,7 @@
 
       countEl.textContent = players;
       potTotal.textContent = naira(pot);
-      breakdown.textContent = players + " players × " + naira(stake) + ". Winner receives " + naira(winnings) + " after the " + naira(fee) + " platform fee.";
+      breakdown.textContent = players + " players × " + naira(stake) + ". Winner receives " + naira(winnings) + " after the " + naira(fee) + " platform fee (" + feeInfo.percent + "%).";
 
       minus.disabled = players <= MIN_PLAYERS;
       plus.disabled = players >= MAX_PLAYERS;
@@ -149,6 +150,7 @@
     stakeEl.addEventListener("input", render);
 
     render();
+    splitpotFeeReady.then(render);
 
     // Carry the calculator values into the create room page
     let signedIn = false;

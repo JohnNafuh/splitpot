@@ -176,6 +176,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
+  <script src="fees.js"></script>
 
   <script>
     const $ = (id) => document.getElementById(id);
@@ -242,7 +243,7 @@
       open.forEach((d) => {
         const room = d.rooms;
         const inRoom = players.filter((p) => p.room_id === room.id);
-        const winnerGets = room.pot - Math.floor((room.pot * 20) / 100);
+        const winnerGets = room.pot - splitpotFee(room.pot).fee;
 
         const card = el("article", "dispute");
 
@@ -356,6 +357,7 @@
 
         $("intro").textContent = "Votes didn't match in these rooms. The pot stays locked until you decide.";
         $("adminView").hidden = false;
+        await splitpotFeeReady;
         await load();
       } catch (err) {
         $("intro").textContent = "";
