@@ -336,6 +336,7 @@
     let me = null;
     let room = null;
     let players = [];
+    let proofs = [];
     let names = {};
     let selectedVote = null;
     let busy = false;
@@ -401,6 +402,10 @@
       if (pError) throw pError;
       players = ps;
 
+      const { data: pf, error: pfError } = await sb.from("room_proofs").select("user_id").eq("room_id", room.id);
+      if (pfError) throw pfError;
+      proofs = pf;
+
       const ids = players.map((p) => p.user_id);
       if (room.winner_id) ids.push(room.winner_id);
       const missing = [...new Set(ids)].filter((id) => !names[id]);
@@ -457,6 +462,7 @@
         li.append(el("span", "avatar", displayName.charAt(0)));
         li.append(el("span", "name", p.user_id === me ? displayName + " (you)" : displayName));
         if (p.user_id === room.host_id) li.append(el("span", "tag", "Host"));
+        if (room.status === "disputed" && proofs.some((x) => x.user_id === p.user_id)) li.append(el("span", "tag voted", "Proof ✓"));
         if (showVotes && p.vote_for) li.append(el("span", "tag voted", "Voted"));
         list.append(li);
       });
@@ -540,13 +546,22 @@
         }
       } else if (room.status === "disputed") {
         box.append(el("p", "big", "Under review"));
-        box.append(el("p", "", "The votes didn't match. An admin will review this room and pick the winner. The pot stays locked until then."));
+        box.append(el("p", "", "The votes didn't match. Upload a screenshot or recording of the result below so an admin can decide. The pot stays locked until then."));
       } else if (room.status === "cancelled") {
         box.append(el("p", "big", "Room cancelled"));
         box.append(el("p", "", "Every player's stake was refunded to their wallet."));
       }
 
       panel.append(box);
+
+      if (room.status === "disputed" && mine) {
+        const count = proofs.filter((x) => x.user_id === me).length;
+        panel.append(el("h2", "", "Your proof"));
+        panel.append(el("p", "hint", count
+          ? "You've uploaded " + count + " file" + (count > 1 ? "s" : "") + ". You can add more (up to 5)."
+          : "Add a screenshot or screen recording of the final result."));
+        if (count < 5) panel.append(proofButton(count ? "Add another file" : "Upload screenshot or recording"));
+      }
       const home = el("a", "btn btn-secondary", "Back home");
       home.href = "index.html";
       panel.append(home);
@@ -567,6 +582,32 @@
         busy = false;
         if (room) renderPanel();
       }
+    }
+
+    function proofButton(text) {
+      const wrap = el("div");
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*,video/*";
+      input.hidden = true;
+      input.addEventListener("change", () => { if (input.files[0]) uploadProof(input.files[0]); });
+      wrap.append(input, button(text, "btn-primary", () => input.click()));
+      return wrap;
+    }
+
+    function uploadProof(file) {
+      if (file.size > 50 * 1024 * 1024) {
+        setError("That file is over 50 MB. Try a screenshot or a shorter recording.");
+        return;
+      }
+      run(async () => {
+        const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const path = room.id + "/" + me + "/" + Date.now() + "." + ext;
+        const { error: upError } = await sb.storage.from("proofs").upload(path, file, { contentType: file.type });
+        if (upError) throw upError;
+        const { error } = await sb.rpc("add_proof", { p_room_id: room.id, p_path: path });
+        if (error) throw error;
+      });
     }
 
     function joinRoom() {
@@ -620,6 +661,7 @@
         .channel("room-" + room.id)
         .on("postgres_changes", { event: "*", schema: "public", table: "rooms", filter: "id=eq." + room.id }, () => load())
         .on("postgres_changes", { event: "*", schema: "public", table: "room_players", filter: "room_id=eq." + room.id }, () => load())
+        .on("postgres_changes", { event: "*", schema: "public", table: "room_proofs", filter: "room_id=eq." + room.id }, () => load())
         .subscribe();
     }
 
