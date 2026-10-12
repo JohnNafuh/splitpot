@@ -108,29 +108,41 @@
     }
 
     /* Earnings */
-    .today {
+    .hero-earn {
       margin-top: 20px;
+      padding: 22px 18px;
+      border: 1px solid rgba(227, 179, 65, 0.5);
+      border-radius: 22px;
+      background: linear-gradient(160deg, rgba(227, 179, 65, 0.16), rgba(8, 36, 25, 0.5));
     }
 
-    .today .label {
-      font-size: 0.9rem;
+    .hero-earn .label {
+      font-size: 0.95rem;
+      font-weight: 600;
       color: var(--moss);
     }
 
-    .today .big {
-      margin-top: 4px;
-      font-size: clamp(2.6rem, 12vw, 3.4rem);
+    .hero-earn .huge {
+      margin-top: 6px;
+      font-size: clamp(3rem, 15vw, 4.2rem);
       font-weight: 800;
       line-height: 1;
-      letter-spacing: -0.04em;
+      letter-spacing: -0.045em;
       color: var(--brass);
+      overflow-wrap: anywhere;
+    }
+
+    .hero-earn .sub {
+      margin-top: 12px;
+      color: var(--moss);
+      line-height: 1.4;
     }
 
     .tiles {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
-      margin-top: 18px;
+      margin-top: 12px;
     }
 
     .tiles div {
@@ -138,6 +150,10 @@
       border: 1px solid var(--line);
       border-radius: 14px;
       background: rgba(8, 36, 25, 0.45);
+    }
+
+    .tiles .today-tile {
+      border-color: var(--brass);
     }
 
     .tiles dt {
@@ -151,48 +167,149 @@
       overflow-wrap: anywhere;
     }
 
+    .range {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      margin-top: 12px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(8, 36, 25, 0.45);
+    }
+
+    .range button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--moss);
+      font-weight: 600;
+    }
+
+    .range button[aria-pressed="true"] {
+      background: var(--felt-raised);
+      color: var(--brass);
+    }
+
     .chart {
-      margin-top: 18px;
-      padding: 14px 12px 10px;
+      margin-top: 12px;
+      padding: 16px 12px 12px;
       border: 1px solid var(--line);
       border-radius: 18px;
       background: rgba(8, 36, 25, 0.45);
     }
 
-    .chart .chart-top {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
+    .readout .when {
+      font-size: 0.9rem;
+      color: var(--moss);
+    }
+
+    .readout .amount {
+      margin-top: 2px;
+      font-size: 1.9rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--brass);
+    }
+
+    .readout .games {
+      min-height: 1.3em;
+      font-size: 0.9rem;
       color: var(--moss);
     }
 
     .bars {
       display: grid;
-      grid-template-columns: repeat(14, 1fr);
-      align-items: end;
-      gap: 4px;
-      height: 120px;
+      align-items: stretch;
+      height: 170px;
       margin-top: 12px;
+      border-bottom: 1px solid var(--line);
+      touch-action: pan-y;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .bar-col {
+      display: flex;
+      align-items: flex-end;
+      border-radius: 4px 4px 0 0;
+    }
+
+    .bar-col.selected {
+      background: rgba(244, 239, 225, 0.08);
     }
 
     .bar {
+      width: 100%;
       min-height: 3px;
-      border-radius: 4px 4px 1px 1px;
+      border-radius: 3px 3px 1px 1px;
       background: var(--brass-deep);
     }
 
-    .bar.today-bar {
+    .bar.zero {
+      opacity: 0.35;
+    }
+
+    .bar-col.selected .bar {
       background: var(--brass);
     }
 
     .bar-labels {
       display: grid;
-      grid-template-columns: repeat(14, 1fr);
-      gap: 4px;
       margin-top: 6px;
       font-size: 0.7rem;
       color: var(--moss);
-      text-align: center;
+    }
+
+    .bar-labels span {
+      display: flex;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    .chart-note {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      line-height: 1.45;
+      color: var(--moss);
+    }
+
+    .day-list {
+      margin-top: 12px;
+      padding: 0 16px;
+      list-style: none;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+
+    .day-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .day-list li:last-child {
+      border-bottom: 0;
+    }
+
+    .day-list .line {
+      font-weight: 600;
+    }
+
+    .day-list .meta {
+      font-size: 0.85rem;
+      color: var(--moss);
+    }
+
+    .day-list .money {
+      font-weight: 800;
+      color: var(--brass);
+      white-space: nowrap;
     }
 
     .stat-list {
@@ -374,25 +491,40 @@
     <section id="dashView" hidden>
       <h1>Earnings</h1>
 
-      <div class="today">
-        <p class="label">Profit today</p>
-        <p class="big" id="earnToday">₦0</p>
-      </div>
+      <section class="hero-earn" aria-label="Total platform fees earned">
+        <p class="label">Total platform fees earned</p>
+        <p class="huge" id="earnAll">₦0</p>
+        <p class="sub" id="earnSub"></p>
+      </section>
 
       <dl class="tiles">
+        <div class="today-tile"><dt>Today</dt><dd id="earnToday">₦0</dd></div>
         <div><dt>This week</dt><dd id="earnWeek">₦0</dd></div>
         <div><dt>This month</dt><dd id="earnMonth">₦0</dd></div>
-        <div><dt>All time</dt><dd id="earnAll">₦0</dd></div>
       </dl>
 
+      <h2>Daily profit</h2>
+      <div class="range" id="range" role="group" aria-label="Chart range">
+        <button type="button" data-days="7" aria-pressed="false">7D</button>
+        <button type="button" data-days="14" aria-pressed="true">14D</button>
+        <button type="button" data-days="30" aria-pressed="false">30D</button>
+        <button type="button" data-days="90" aria-pressed="false">90D</button>
+      </div>
+
       <div class="chart">
-        <div class="chart-top">
-          <span>Last 14 days</span>
-          <span id="chartMax"></span>
+        <div class="readout" aria-live="polite">
+          <p class="when" id="readWhen"></p>
+          <p class="amount" id="readAmount">₦0</p>
+          <p class="games" id="readGames"></p>
         </div>
         <div class="bars" id="bars"></div>
         <div class="bar-labels" id="barLabels"></div>
+        <p class="chart-note" id="chartNote">Tap or slide across the bars to see each day.</p>
       </div>
+
+      <h2>Profit by day</h2>
+      <ul class="day-list" id="dayList"></ul>
+      <p class="muted" id="dayEmpty" hidden>No fees in this range yet.</p>
 
       <h2>Activity</h2>
       <dl class="stat-list">
@@ -498,40 +630,137 @@
     });
 
     // ----- Earnings -----
+    let lastEarnings = null;
+    let rangeDays = 14;
+    let series = [];
+    let selected = -1;
+    let limitedRange = false;
+
+    const parseDay = (iso) => new Date(iso + "T12:00:00");
+    const dayLabel = (iso) => parseDay(iso).toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short" });
+    const gamesText = (n) => n + (n === 1 ? " game" : " games") + " settled";
+
+    async function loadSeries(days) {
+      limitedRange = false;
+      const { data, error } = await adminSb.rpc("admin_daily_fees", { p_days: days });
+      if (!error && data) {
+        return data.map((d) => ({ day: d.day, total: Number(d.total), games: Number(d.games) }));
+      }
+      // Daily-fees SQL not added yet: fall back to the 14 days from admin_earnings
+      limitedRange = true;
+      return ((lastEarnings && lastEarnings.daily) || [])
+        .slice(-days)
+        .map((d) => ({ day: d.day, total: Number(d.total), games: null }));
+    }
+
+    function selectDay(i) {
+      if (!series.length) return;
+      selected = Math.max(0, Math.min(series.length - 1, i));
+      const d = series[selected];
+      $("readWhen").textContent = (selected === series.length - 1 ? "Today · " : "") + dayLabel(d.day);
+      $("readAmount").textContent = naira(d.total);
+      $("readGames").textContent = d.games === null ? "" : gamesText(d.games);
+      document.querySelectorAll("#bars .bar-col").forEach((col, idx) => {
+        col.classList.toggle("selected", idx === selected);
+      });
+    }
+
+    function renderSeries() {
+      const bars = $("bars");
+      const labels = $("barLabels");
+      const list = $("dayList");
+      bars.innerHTML = "";
+      labels.innerHTML = "";
+      list.innerHTML = "";
+
+      const n = series.length;
+      const gap = n > 30 ? "1px" : "4px";
+      [bars, labels].forEach((node) => {
+        node.style.gridTemplateColumns = "repeat(" + n + ", 1fr)";
+        node.style.columnGap = gap;
+      });
+
+      const max = Math.max(0, ...series.map((d) => d.total));
+      const sum = series.reduce((total, d) => total + d.total, 0);
+      const best = series.reduce((top, d) => (d.total > top.total ? d : top), { total: 0, day: "" });
+      const step = n <= 7 ? 1 : n <= 14 ? 2 : n <= 30 ? 5 : 15;
+
+      series.forEach((d, i) => {
+        const col = el("div", "bar-col");
+        const bar = el("div", "bar" + (d.total ? "" : " zero"));
+        bar.style.height = max ? Math.max(2, (d.total / max) * 100) + "%" : "2%";
+        col.append(bar);
+        bars.append(col);
+        labels.append(el("span", "", (n - 1 - i) % step === 0 ? String(parseDay(d.day).getDate()) : ""));
+      });
+
+      let note = "Total " + naira(sum) + " · Avg " + naira(n ? sum / n : 0) + " a day";
+      if (best.total > 0) note += " · Best " + naira(best.total) + " (" + dayLabel(best.day) + ")";
+      if (limitedRange) note += ". Showing 14 days only. Add the daily-fees SQL to unlock 30D and 90D.";
+      $("chartNote").textContent = note;
+
+      const withFees = series.filter((d) => d.total > 0).reverse();
+      list.hidden = withFees.length === 0;
+      $("dayEmpty").hidden = withFees.length > 0;
+      withFees.forEach((d) => {
+        const li = el("li");
+        const left = el("div");
+        left.append(el("p", "line", dayLabel(d.day)));
+        if (d.games !== null) left.append(el("p", "meta", gamesText(d.games)));
+        li.append(left, el("span", "money", naira(d.total)));
+        list.append(li);
+      });
+    }
+
+    async function showSeries() {
+      series = await loadSeries(rangeDays);
+      renderSeries();
+      selectDay(series.length - 1);
+    }
+
+    function pickFromPointer(event) {
+      const rect = $("bars").getBoundingClientRect();
+      if (!rect.width || !series.length) return;
+      selectDay(Math.floor(((event.clientX - rect.left) / rect.width) * series.length));
+    }
+
+    $("bars").addEventListener("pointerdown", pickFromPointer);
+    $("bars").addEventListener("pointermove", (event) => {
+      if (event.buttons || event.pointerType === "touch") pickFromPointer(event);
+    });
+
+    $("range").addEventListener("click", async (event) => {
+      const button = event.target.closest("button[data-days]");
+      if (!button) return;
+      rangeDays = Number(button.dataset.days);
+      document.querySelectorAll("#range button").forEach((b) => {
+        b.setAttribute("aria-pressed", String(b === button));
+      });
+      try {
+        await showSeries();
+      } catch (err) {
+        $("error").textContent = err.message || "Could not load the chart.";
+      }
+    });
+
     async function loadEarnings() {
       const { data: e, error } = await adminSb.rpc("admin_earnings");
       if (error) throw error;
+      lastEarnings = e;
 
+      $("earnAll").textContent = naira(e.all_time);
+      $("earnSub").textContent =
+        Number(e.games_settled).toLocaleString("en-NG") + " games settled · " + naira(e.volume) + " played";
       $("earnToday").textContent = naira(e.today);
       $("earnWeek").textContent = naira(e.week);
       $("earnMonth").textContent = naira(e.month);
-      $("earnAll").textContent = naira(e.all_time);
       $("statGames").textContent = Number(e.games_settled).toLocaleString("en-NG");
       $("statVolume").textContent = naira(e.volume);
       $("statBalances").textContent = naira(e.player_balances);
       $("statLocked").textContent = naira(e.locked);
       $("statTest").textContent = naira(e.test_money);
 
-      const days = e.daily || [];
-      const max = Math.max(0, ...days.map((d) => Number(d.total)));
-      $("chartMax").textContent = max ? "Best day " + naira(max) : "No fees yet";
-
-      const bars = $("bars");
-      const labels = $("barLabels");
-      bars.innerHTML = "";
-      labels.innerHTML = "";
-
-      days.forEach((d, i) => {
-        const total = Number(d.total);
-        const bar = el("div", "bar" + (i === days.length - 1 ? " today-bar" : ""));
-        bar.style.height = max ? Math.max(2, (total / max) * 100) + "%" : "2%";
-        const date = new Date(d.day + "T12:00:00");
-        const label = date.toLocaleDateString("en-NG", { day: "numeric", month: "short" });
-        bar.title = label + ": " + naira(total);
-        bar.setAttribute("aria-label", label + ": " + naira(total));
-        bars.append(bar);
-        labels.append(el("span", "", i % 2 === 1 ? String(date.getDate()) : ""));
-      });
+      await showSeries();
     }
 
     // ----- Disputes -----
