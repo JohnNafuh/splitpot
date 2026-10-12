@@ -564,12 +564,25 @@
         players = data;
       }
 
-      await loadNames([...players.map((p) => p.user_id), ...resolved.map((d) => d.resolved_winner)]);
-      renderOpen(open, players);
+      let proofs = [];
+      if (open.length) {
+        const { data: pf, error: pfError } = await adminSb
+          .from("room_proofs")
+          .select("room_id, user_id, path")
+          .in("room_id", open.map((d) => d.room_id));
+        if (pfError) throw pfError;
+        proofs = await Promise.all(pf.map(async (p) => {
+          const { data } = await adminSb.storage.from("proofs").createSignedUrl(p.path, 3600);
+          return { ...p, url: data ? data.signedUrl : null };
+        }));
+      }
+
+      await loadNames([...players.map((p) => p.user_id), ...resolved.map((d) => d.resolved_winner), ...proofs.map((p) => p.user_id)]);
+      renderOpen(open, players, proofs);
       renderResolved(resolved);
     }
 
-    function renderOpen(open, players) {
+    function renderOpen(open, players, proofs) {
       const list = $("openList");
       list.innerHTML = "";
       $("openHeading").textContent = open.length ? "Disputes (" + open.length + ")" : "Disputes";
@@ -607,6 +620,23 @@
         });
         card.append(votes);
 
+        const evidence = el("p", "reason");
+        const items = proofs.filter((x) => x.room_id === room.id && x.url);
+        if (!items.length) {
+          evidence.textContent = "No proof uploaded.";
+        } else {
+          evidence.append("Proof: ");
+          items.forEach((x, i) => {
+            if (i) evidence.append(" · ");
+            const a = el("a", "", nameOf(x.user_id) + " " + (i + 1));
+            a.href = x.url;
+            a.target = "_blank";
+            a.rel = "noopener";
+            evidence.append(a);
+          });
+        }
+        card.append(evidence);
+
         const decide = el("div", "decide");
         inRoom.forEach((p) => {
           const b = el("button", "btn btn-primary", "Pay " + nameOf(p.user_id) + " " + naira(winnerGets));
@@ -637,7 +667,7 @@
         const li = el("li");
         const outcome = d.resolved_winner
           ? "Paid " + nameOf(d.resolved_winner) + " " + naira(room.pot - room.fee)
-          : "Refunded everyone";
+          : (d.resolved_by ? "Refunded everyone" : "Auto-refunded (room expired)");
         li.append(
           el("p", "line", room.game + " · " + outcome),
           el("p", "meta", "Room " + room.code + (d.resolved_at ? " · " + when(d.resolved_at) : ""))
