@@ -111,6 +111,26 @@
       line-height: 1.4;
     }
 
+    .check {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      line-height: 1.45;
+    }
+
+    .check input {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      margin-top: 2px;
+      accent-color: var(--brass);
+    }
+
+    .check a {
+      color: var(--brass);
+      text-decoration: underline;
+    }
+
     [hidden] {
       display: none !important;
     }
@@ -152,18 +172,28 @@
 
     <!-- Step 2: pick a username (new players only) -->
     <section id="usernameStep" hidden>
-      <h1>Pick a username</h1>
-      <p class="hint">This is how your friends see you in a room. Use 3 to 20 letters, numbers or underscores.</p>
+      <h1 id="stepTitle">Pick a username</h1>
+      <p class="hint" id="stepHint">This is how your friends see you in a room. Use 3 to 20 letters, numbers or underscores.</p>
 
       <form class="form" id="usernameForm" novalidate>
-        <div class="input-group">
+        <div class="input-group" id="usernameGroup">
           <label for="username">Username</label>
           <input id="username" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="20" required>
         </div>
 
+        <div class="input-group">
+          <label for="birthDate">Date of birth (you must be 18 or older)</label>
+          <input id="birthDate" type="date" autocomplete="bday" required>
+        </div>
+
+        <label class="check">
+          <input id="terms" type="checkbox">
+          <span>I'm 18 or older and I accept the <a href="terms.html" target="_blank" rel="noopener">Terms</a>.</span>
+        </label>
+
         <p class="error" id="usernameError" role="alert"></p>
 
-        <button class="btn btn-primary" type="submit" id="usernameButton">Save username</button>
+        <button class="btn btn-primary" type="submit" id="usernameButton">Save and continue</button>
       </form>
     </section>
 
@@ -205,24 +235,49 @@
       authError.textContent = "";
     }
 
+    let existingProfile = null;
+    const birthEl = document.getElementById("birthDate");
+    const termsEl = document.getElementById("terms");
+    const stepTitle = document.getElementById("stepTitle");
+    const stepHint = document.getElementById("stepHint");
+    const usernameGroup = document.getElementById("usernameGroup");
+    birthEl.max = new Date().toISOString().slice(0, 10);
+
+    function ageFrom(iso) {
+      const born = new Date(iso + "T00:00:00");
+      if (isNaN(born)) return -1;
+      const now = new Date();
+      let age = now.getFullYear() - born.getFullYear();
+      const months = now.getMonth() - born.getMonth();
+      if (months < 0 || (months === 0 && now.getDate() < born.getDate())) age--;
+      return age;
+    }
+
     function showUsernameStep() {
       authStep.hidden = true;
       usernameStep.hidden = false;
-      usernameEl.focus();
+      const completing = Boolean(existingProfile);
+      usernameGroup.hidden = completing;
+      stepTitle.textContent = completing ? "One more step" : "Pick a username";
+      stepHint.textContent = completing
+        ? "Confirm your age and accept the Terms to keep using splitpot."
+        : "This is how your friends see you in a room. Use 3 to 20 letters, numbers or underscores.";
+      if (!completing) usernameEl.focus();
     }
 
-    async function hasProfile(userId) {
+    async function getProfile(userId) {
       const { data, error } = await sb
         .from("profiles")
-        .select("id")
+        .select("id, birth_date, terms_accepted_at")
         .eq("id", userId)
         .maybeSingle();
       if (error) throw error;
-      return Boolean(data);
+      return data;
     }
 
     async function routeSignedInUser(user) {
-      if (await hasProfile(user.id)) {
+      existingProfile = await getProfile(user.id);
+      if (existingProfile && existingProfile.birth_date && existingProfile.terms_accepted_at) {
         window.location.href = nextPage;
       } else {
         showUsernameStep();
@@ -277,9 +332,24 @@
       event.preventDefault();
       usernameError.textContent = "";
 
+      const completing = Boolean(existingProfile);
       const username = usernameEl.value.trim();
-      if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
+      if (!completing && !/^[A-Za-z0-9_]{3,20}$/.test(username)) {
         usernameError.textContent = "Use 3 to 20 letters, numbers or underscores.";
+        return;
+      }
+
+      const age = ageFrom(birthEl.value);
+      if (!birthEl.value || age < 0 || age > 120) {
+        usernameError.textContent = "Enter your date of birth.";
+        return;
+      }
+      if (age < 18) {
+        usernameError.textContent = "You must be 18 or older to use splitpot.";
+        return;
+      }
+      if (!termsEl.checked) {
+        usernameError.textContent = "Tick the box to accept the Terms.";
         return;
       }
 
@@ -293,7 +363,11 @@
           return;
         }
 
-        const { error } = await sb.from("profiles").insert({ id: user.id, username });
+        const fields = { birth_date: birthEl.value, terms_accepted_at: new Date().toISOString() };
+        const { error } = completing
+          ? await sb.from("profiles").update(fields).eq("id", user.id)
+          : await sb.from("profiles").insert({ id: user.id, username, ...fields });
+
         if (error) {
           if (error.code === "23505") {
             usernameError.textContent = "That username is taken. Try another.";
@@ -304,10 +378,10 @@
 
         window.location.href = nextPage;
       } catch (err) {
-        usernameError.textContent = err.message || "Could not save username. Try again.";
+        usernameError.textContent = err.message || "Could not save. Try again.";
       } finally {
         usernameButton.disabled = false;
-        usernameButton.textContent = "Save username";
+        usernameButton.textContent = "Save and continue";
       }
     });
 

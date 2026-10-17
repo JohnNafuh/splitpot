@@ -578,6 +578,10 @@
         await load();
       } catch (err) {
         const text = err.message || "Something went wrong. Try again.";
+        if (/Terms/.test(text)) {
+          window.location.href = "login.html?next=" + encodeURIComponent("room.html?code=" + room.code);
+          return;
+        }
         setError(text, /balance/i.test(text));
       } finally {
         busy = false;

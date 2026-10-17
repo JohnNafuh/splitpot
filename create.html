@@ -349,6 +349,10 @@
 
         window.location.href = "room.html?code=" + encodeURIComponent(code);
       } catch (err) {
+        if (/Terms/.test(err.message || "")) {
+          window.location.href = "login.html?next=create.html";
+          return;
+        }
         errorEl.textContent = err.message || "Could not create the room. Try again.";
         createBtn.textContent = "Create room";
         render();
