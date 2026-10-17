@@ -403,8 +403,7 @@
       players = ps;
 
       const { data: pf, error: pfError } = await sb.from("room_proofs").select("user_id").eq("room_id", room.id);
-      if (pfError) throw pfError;
-      proofs = pf;
+      proofs = pfError ? [] : pf;
 
       const ids = players.map((p) => p.user_id);
       if (room.winner_id) ids.push(room.winner_id);
