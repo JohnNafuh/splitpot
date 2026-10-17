@@ -875,7 +875,7 @@
           decide.append(b);
         });
 
-        const refund = el("button", "btn btn-secondary", "Refund everyone");
+        const refund = el("button", "btn btn-secondary", "Refund everyone, keep " + naira(splitpotFee(room.pot).fee) + " fee");
         refund.type = "button";
         refund.disabled = busy;
         refund.addEventListener("click", () => resolve(room, null));
@@ -896,7 +896,7 @@
         const li = el("li");
         const outcome = d.resolved_winner
           ? "Paid " + nameOf(d.resolved_winner) + " " + naira(room.pot - room.fee)
-          : (d.resolved_by ? "Refunded everyone" : "Auto-refunded (room expired)");
+          : (d.resolved_by ? "Refunded minus fee" : "Auto-refunded (room expired)");
         li.append(
           el("p", "line", room.game + " · " + outcome),
           el("p", "meta", "Room " + room.code + (d.resolved_at ? " · " + when(d.resolved_at) : ""))
@@ -910,7 +910,7 @@
 
       const question = winnerId
         ? "Pay " + nameOf(winnerId) + " for room " + room.code + "? This can't be undone."
-        : "Refund every player in room " + room.code + "? This can't be undone.";
+        : "Refund every player in room " + room.code + " minus the platform fee? This can't be undone.";
       if (!window.confirm(question)) return;
 
       busy = true;

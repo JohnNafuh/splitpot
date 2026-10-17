@@ -461,7 +461,7 @@
         li.append(el("span", "avatar", displayName.charAt(0)));
         li.append(el("span", "name", p.user_id === me ? displayName + " (you)" : displayName));
         if (p.user_id === room.host_id) li.append(el("span", "tag", "Host"));
-        if (room.status === "disputed" && proofs.some((x) => x.user_id === p.user_id)) li.append(el("span", "tag voted", "Proof ✓"));
+        if (room.status === "disputed" && proofs.some((x) => x.user_id === p.user_id)) li.append(el("span", "tag voted", "Proof submitted"));
         if (showVotes && p.vote_for) li.append(el("span", "tag voted", "Voted"));
         list.append(li);
       });
@@ -548,16 +548,18 @@
         box.append(el("p", "", "The votes didn't match. Upload a screenshot or recording of the result below so an admin can decide. The pot stays locked until then."));
       } else if (room.status === "cancelled") {
         box.append(el("p", "big", "Room cancelled"));
-        box.append(el("p", "", "Every player's stake was refunded to their wallet."));
+        box.append(el("p", "", room.fee > 0
+          ? "The votes couldn't be settled, so stakes were refunded minus a " + naira(room.fee / Math.max(players.length, 1)) + " platform fee each."
+          : "Every player's stake was refunded to their wallet."));
       }
 
       panel.append(box);
 
       if (room.status === "disputed" && mine) {
         const count = proofs.filter((x) => x.user_id === me).length;
-        panel.append(el("h2", "", "Your proof"));
+        panel.append(el("h2", "", count ? "Proof submitted" : "Your proof"));
         panel.append(el("p", "hint", count
-          ? "You've uploaded " + count + " file" + (count > 1 ? "s" : "") + ". You can add more (up to 5)."
+          ? count + " file" + (count > 1 ? "s" : "") + " sent to the admin. You can add more (up to 5)."
           : "Add a screenshot or screen recording of the final result."));
         if (count < 5) panel.append(proofButton(count ? "Add another file" : "Upload screenshot or recording"));
       }
